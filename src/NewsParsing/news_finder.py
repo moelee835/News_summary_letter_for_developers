@@ -7,94 +7,224 @@ from configuration.config import NAVER_API_CLIENT_ID, NAVER_API_CLIENT_SECRET, O
 import requests
 import json
 
-# 크롤링 제외 도메인 (에러 페이지 반환 확인됨)
-SKIP_DOMAINS = [
-    "byline.network",
-    "heraldcorp.com",
-    "dt.co.kr",
-    "nytimes.com",
-    "breaknews.com",
-]
-
-# 뉴스 사이트별 기사 본문 CSS 선택자
-# selector: BeautifulSoup select() 메서드에 전달할 CSS 선택자 문자열
 SITE_SELECTORS = {
-    "mk.co.kr":             {"selector": "div.article_txt"},
-    "hankooki.com":         {"selector": "article#article-view-content-div"},
-    "etnews.com":           {"selector": "div#articleBody"},
-    "newspim.com":          {"selector": "section.contents"},
-    "newdaily.co.kr":       {"selector": "div#article_conent"},  # 원본 HTML의 오타 그대로
-    "ddaily.co.kr":         {"selector": "div.article_content"},
-    "inews24.com":          {"selector": "article#articleBody"},
-    "edaily.co.kr":         {"selector": "div.news_body"},
-    "sportschosun.com":     {"selector": "div#articleBody"},
-    "newstown.co.kr":       {"selector": "article.grid.body"},
-    "financialpost.co.kr":  {"selector": "article#article-view-content-div"},
-    "enewstoday.co.kr":     {"selector": "article#article-view-content-div"},
-    "yna.co.kr":            {"selector": "article.story-news"},
-    "thefirstmedia.net":    {"selector": "article#article-view-content-div"},
-    "smedaily.co.kr":       {"selector": "article#article-view-content-div"},
-    "ftoday.co.kr":         {"selector": "article#article-view-content-div"},
-    "itdaily.kr":           {"selector": "article#article-view-content-div"},
-    "ebn.co.kr":            {"selector": "article#article-view-content-div"},
-    "seoulwire.com":        {"selector": "div#article-view-content-div"},
-    "hansbiz.co.kr":        {"selector": "article#article-view-content-div"},
-    "wowtv.co.kr":          {"selector": "div#divNewsContent"},
-    "aitimes.com":          {"selector": "article"},
-    "sidae.com":            {"selector": "div.article-body"},
-    "pinpointnews.co.kr":   {"selector": "article#article-view-content-div"},
-    "hellot.net":           {"selector": "div#news_body_area"},
-    "ziksir.com":           {"selector": "article#article-view-content-div"},
-    "megaeconomy.co.kr":    {"selector": "div#viewConts"},
-    "koit.co.kr":           {"selector": "article#article-view-content-div"},
-    "kdpress.co.kr":        {"selector": "article#article-view-content-div"},
-    "kbs.co.kr":            {"selector": "div#cont_newstext"},
-    "cstimes.com":          {"selector": "article.grid.body"},
-    "swtvnews.com":         {"selector": "div#viewConts"},
-    "fnnews.com":           {"selector": "div#article_content"},
-    "epnc.co.kr":           {"selector": "article#article-view-content-div"},
-    "newswell.co.kr":       {"selector": "article"},
-    "tvchosun.com":         {"selector": "article#ui_contents"},
-    "venturesquare.net":    {"selector": "div.entry-content"},
-    "fetv.co.kr":           {"selector": "div#news_body_area"},
-    "dailysecu.com":        {"selector": "div#article-view-content-div"},
-    "financialreview.co.kr":{"selector": "article.grid.body"},
-    "popcornnews.net":      {"selector": "article#article-view-content-div"},
-    "sisacast.kr":          {"selector": "article"},
-    "datanet.co.kr":        {"selector": "div#article-view-content-div"},
-    "gamemeca.com":         {"selector": "div.article"},
-    "seoul.co.kr":          {"selector": "div#cont_newstext"},
-    "inven.co.kr":          {"selector": "div.contentBody"},
-    "bizwnews.com":         {"selector": "article#article-view-content-div"},
-    "hbnpress.com":         {"selector": "div#viewConts"},
-    "efnews.co.kr":         {"selector": "article.grid.body"},
-    "donga.com":            {"selector": "div.view_body"},
-    "socialvalue.kr":       {"selector": "div#viewConts"},
-    "ggilbo.com":           {"selector": "article#article-view-content-div"},
-    "hellodd.com":          {"selector": "article#article-view-content-div"},
-    "news2day.co.kr":       {"selector": "div.article_view_sec"},
-    "mt.co.kr":             {"selector": "article#articleBody"},
-    "metroseoul.co.kr":     {"selector": "div.left-article-txt"},
-    "kado.net":             {"selector": "div.article-body"},
-    "aving.net":            {"selector": "article#article-view-content-div"},
-    "asiatoday.co.kr":      {"selector": "div.article_body"},
-    "busan.com":            {"selector": "div.article_content"},
-    "bloter.net":           {"selector": "article#article-view-content-div"},
-    "dailian.co.kr":        {"selector": "div.article"},
-    "newsis.com":           {"selector": "div.articleView"},
-    "economist.co.kr":      {"selector": "div#articleBody"},
-    "gamefocus.co.kr":      {"selector": "div#view_content"},
+    "4th.kr": "#article-view-content-div",
+    "aflnews.co.kr": "div.article-body",
+    "aitimes.com": "#article-view-content-div",
+    "aitimes.kr": "#article-view-content-div",
+    "ajunews.com": "#articleBody",
+    "akomnews.com": "#news_body_area",
+    "apnews.kr": "#article-view-content-div",
+    "asiaa.co.kr": "#article-view-content-div",
+    "asiatoday.co.kr": "#font",
+    "beyondpost.co.kr": "#articleBody",
+    "biotimes.co.kr": "#article-view-content-div",
+    "biz.newdaily.co.kr": "#article_conent",
+    "bizwnews.com": "#article-view-content-div",
+    "bloter.net": "#article-view-content-div",
+    "bokuennews.com": "#news_body_area",
+    "bosa.co.kr": "#article-view-content-div",
+    "busan.com": "div.article_content",
+    "ccdn.co.kr": "#article-view-content-div",
+    "ccnnews.co.kr": "div.auto-article.auto-dl04",
+    "cfnews.kr": "div.con",
+    "cn.asiatoday.co.kr": "div.photo_news_box",
+    "cnbnews.com": "#news_body_area",
+    "cstimes.com": "#article-view-content-div",
+    "dailian.co.kr": "div.article",
+    "daily.hankooki.com": "#article-view-content-div",
+    "dailypop.kr": "#article-view-content-div",
+    "dailysecu.com": "#article-view-content-div",
+    "datanet.co.kr": "#article-view-content-div",
+    "ddaily.co.kr": "div.article_content",
+    "ddanzi.com": "div.pop-body.normal",
+    "dealsite.co.kr": "div.rnmc-right.rnmc-right1",
+    "digitalbizon.com": "#article-view-content-div",
+    "digitalchosun.dizzo.com": "div.cont_body",
+    "digitaltoday.co.kr": "#article-view-content-div",
+    "dnews.co.kr": "div.text",
+    "doctorstimes.com": "#article-view-content-div",
+    "donga.com": "section.news_view",
+    "ebn.co.kr": "#article-view-content-div",
+    "econotimes.com": "article.viewArticle",
+    "econovill.com": "#article-view-content-div",
+    "edaily.co.kr": "div.news_body",
+    "edu.donga.com": "#article-view-content-div",
+    "efnews.co.kr": "#article-view-content-div",
+    "enewstoday.co.kr": "#article-view-content-div",
+    "epnc.co.kr": "#article-view-content-div",
+    "etnews.com": "#articleBody",
+    "etoday.co.kr": "div.articleView",
+    "fetv.co.kr": "#news_body_area",
+    "financialpost.co.kr": "#article-view-content-div",
+    "financialreview.co.kr": "#article-view-content-div",
+    "fnnews.com": "#article_content",
+    "fntimes.com": "#articleBody",
+    "fntoday.co.kr": "#article-view-content-div",
+    "fortunekorea.co.kr": "#article-view-content-div",
+    "ftoday.co.kr": "#article-view-content-div",
+    "g-enews.com": "div.vtxt.detailCont",
+    "game.dailyesports.com": "div.vcon_con.detailCont",
+    "gamefocus.co.kr": "div.detail_view",
+    "gamemeca.com": "div.article",
+    "gametoc.co.kr": "#article-view-content-div",
+    "gamevu.co.kr": "#article-view-content-div",
+    "getnews.co.kr": "#article-view-content-div",
+    "gg.newdaily.co.kr": "#article_conent",
+    "gnmaeil.com": "#articleBody",
+    "gokorea.kr": "#article-view-content-div",
+    "gukjenews.com": "#article-view-content-div",
+    "hankyung.com": "#articletxt",
+    "hansbiz.co.kr": "#article-view-content-div",
+    "hbnpress.com": "#viewConts",
+    "health.chosun.com": "#news_body_id",
+    "hellodd.com": "#article-view-content-div",
+    "hellot.net": "#news_body_area",
+    "hitnews.co.kr": "#article-view-content-div",
+    "inews24.com": "#articleBody",
+    "insightkorea.co.kr": "#article-view-content-div",
+    "inthenews.co.kr": "#news_body_area",
+    "inven.co.kr": "#imageCollectDiv",
+    "irobotnews.com": "#article-view-content-div",
+    "issuenbiz.com": "#article-view-content-div",
+    "it-b.co.kr": "#article-view-content-div",
+    "it.chosun.com": "#article-view-content-div",
+    "it.donga.com": "div.article",
+    "itbiznews.com": "#article-view-content-div",
+    "itdaily.kr": "#article-view-content-div",
+    "itworld.co.kr": "div.article-column__content",
+    "jbnews.com": "#article-view-content-div",
+    "jeonmae.co.kr": "#article-view-content-div",
+    "jndn.com": "#content",
+    "jnilbo.com": "#article-view-content-div",
+    "joongangenews.com": "#article-view-content-div",
+    "joongdo.co.kr": "article.hd-news-info",
+    "joynews24.com": "#articleBody",
+    "kdpress.co.kr": "#article-view-content-div",
+    "khgames.co.kr": "#article-view-content-div",
+    "klnews.co.kr": "#article-view-content-div",
+    "koit.co.kr": "#article-view-content-div",
+    "koreajoongangdaily.joins.com": "div.article_body_container",
+    "koreatimes.co.kr": "div.EditorContents_contents__i9nZI.light",
+    "kpenews.com": "div.article-body",
+    "ktnews.com": "#article-view-content-div",
+    "kyosu.net": "#article-view-content-div",
+    "lawtimes.co.kr": "#article-view-content-div",
+    "m-economynews.com": "#news_body_area",
+    "m-i.kr": "#article-view-content-div",
+    "magazine.hankyung.com": "#magazineView",
+    "mdilbo.com": "div.tag_foot_article.border-dark",
+    "mediafine.co.kr": "#article-view-content-div",
+    "medicaltimes.com": "div.view_cont.ck-content",
+    "medigatenews.com": "div.newsinfo",
+    "megaeconomy.co.kr": "#viewConts",
+    "metroseoul.co.kr": "div.row.article-txt-contents",
+    "mk.co.kr": "div.news_cnt_detail_wrap",
+    "mt.co.kr": "#articleView",
+    "mtnews.net": "#article-view-content-div",
+    "nbntv.kr": "#article-view-content-div",
+    "news.einfomax.co.kr": "#article-view-content-div",
+    "news.kbs.co.kr": "#cont_newstext",
+    "news.mtn.co.kr": "article",
+    "news.sbs.co.kr": "div.text_area",
+    "news.tvchosun.com": "div.text-box",
+    "news.unn.net": "#article-view-content-div",
+    "news1.kr": "article.col-lg-7.article-padding-lg-right",
+    "news2day.co.kr": "div.view_con_wrap",
+    "newscj.com": "#article-view-content-div",
+    "newsfc.co.kr": "#article-view-content-div",
+    "newsian.co.kr": "#article-view-content-div",
+    "newsis.com": "div.viewer",
+    "newspim.com": "#news-contents",
+    "newstown.co.kr": "#_article",
+    "newsway.co.kr": "#view-text",
+    "newswell.co.kr": "#article-view-content-div",
+    "newswhoplus.com": "#article-view-content-div",
+    "newsworks.co.kr": "#articleBody",
+    "nocutnews.co.kr": "#pnlContent",
+    "ohmynews.com": "div.text",
+    "paxetv.com": "#article-view-content-div",
+    "pinpointnews.co.kr": "#article-view-content-div",
+    "popcornnews.net": "#article-view-content-div",
+    "ppss.kr": "#article-view-content-div",
+    "pressman.kr": "#article-view-content-div",
+    "public25.com": "#article-view-content-div",
+    "rapportian.com": "#article-view-content-div",
+    "rightknow.co.kr": "#article-view-content-div",
+    "sedaily.com": "#ttsBody",
+    "segye.com": "article.viewBox2",
+    "seoul.co.kr": "div.viewContent.body19",
+    "seoulwire.com": "#article-view-content-div",
+    "shinailbo.co.kr": "#article-view-content-div",
+    "sidae.com": "div.article-body",
+    "siminilbo.co.kr": "#viewConts",
+    "sisacast.kr": "#article-view-content-div",
+    "sisaon.co.kr": "#article-view-content-div",
+    "slownews.kr": "div.kt-infobox-textcontent",
+    "smartbizn.com": "#article-view-content-div",
+    "smarttimes.co.kr": "#article-view-content-div",
+    "smedaily.co.kr": "#article-view-content-div",
+    "socialvalue.kr": "#viewConts",
+    "sportschosun.com": "div.news_text",
+    "sportsworldi.com": "article.viewBox2",
+    "swtvnews.com": "#viewConts",
+    "techm.kr": "#article-view-content-div",
+    "the-pr.co.kr": "#article-view-content-div",
+    "thefirstmedia.net": "#article-view-content-div",
+    "thegolftimes.co.kr": "#article-view-content-div",
+    "tokenpost.kr": "div.article_content",
+    "topstarnews.net": "div.article-view-page.clearfix",
+    "us.aving.net": "#article-view-content-div",
+    "vegannews.co.kr": "#news_body_area",
+    "venturesquare.net": "div.entry-content",
+    "veritas-a.com": "#article-view-content-div",
+    "view.asiae.co.kr": "#txt_area",
+    "vogue.co.kr": "div.post_content.common_content",
+    "wikileaks-kr.org": "#article-view-content-div",
+    "wikitree.co.kr": "#wikicon",
+    "wowtv.co.kr": "#divNewsContent",
+    "yna.co.kr": "article.story-summary",
+    "youthdaily.co.kr": "#news_bodyArea",
+    "ytn.co.kr": "#CmAdContent",
+    "zdnet.co.kr": "#articleBody",
+    "ziksir.com": "#article-view-content-div",
 }
 
+SKIPPED_SELECTORS = {
+    "biz.chosun.com",
+    "biz.heraldcorp.com",
+    "biz.sbs.co.kr",
+    "breaknews.com",
+    "byline.network",
+    "chosun.com",
+    "dongascience.com",
+    "dt.co.kr",
+    "economist.co.kr",
+    "ekn.kr",
+    "hani.co.kr",
+    "heraldmuse.com",
+    "joongboo.com",
+    "khan.co.kr",
+    "koreaherald.com",
+    "news.jtbc.co.kr",
+    "newsprime.co.kr",
+    "nytimes.com",
+    "platum.kr",
+    "thebell.co.kr",
+    "thisisgame.com",
+}
+
+
+
 class NewsFinder :
-    def __init__(self, display_size, sort_criteria = 'sim') :
+    def __init__(self, display_size : int, sort_criteria : str = 'sim') :
         self.display_size = display_size
         if(sort_criteria not in ('sim', 'date')) :
             raise ValueError('invalid sorting criteria. expect -> [\'sim\' or \'date\']')
         
         self.criteria = sort_criteria
     
-    def search_news(self, topic, page) :
+    def search_news(self, topic : str, page : int) :
         response = requests.get(url=NAVER_NEW_SEARCH_URL,
             params= {
                 "query" : topic,
@@ -106,41 +236,56 @@ class NewsFinder :
                 "X-Naver-Client-Id" : NAVER_API_CLIENT_ID,
                 "X-Naver-Client-Secret" : NAVER_API_CLIENT_SECRET
             })
-        self.parse_and_crawl(response_text= response.text)
+        return self.parse_and_crawl(response_text= response.text)
 
     def parse_and_crawl(self, response_text) :
-        article_list = list(map(lambda i : i['originallink'], json.loads(response_text)['items']))
-        with open("./candidates.txt", "+a") as f :
-            for article in article_list :
-                f.write(article + "\n")
-            f.flush()
-        return
-        result = []
-        for article_sh in article_list :
+        article_list = json.loads(response_text)['items']
+        # with open("./candidates.txt", "+a") as f :
+        #     for article in article_list :
+        #         f.write(article + "\n")
+        #     f.flush()
+        
+        article_collection = []
+        for article_summary in article_list :
             article = dict()
-            article['title'] = article_sh['title']
-            article['pubDate'] = article_sh['pubDate']
-            article['content'] = self.crawl(article_sh['originallink'])
-            result.append()
-    
+            article['title'] = article_summary['title']
+            article['link'] = article_summary['originallink']
+            article['pubDate'] = article_summary['pubDate']
+            article['content'] = self.crawl(article_summary['originallink'])
+            if article['content'] is not None :
+                article_collection.append(article)
+        
+        return article_collection
     
     def crawl(self, url) :
         from bs4 import BeautifulSoup
-        html = requests.get(url=url).text
-        print(html)
-        crawler = BeautifulSoup()
+        html = None
+        try :
+            html = requests.get(url=url).text
+        except Exception as e :
+            return None
 
-if __name__ == '__main__' :
-    # from bs4 import BeautifulSoup
-    # # "https://www.news2day.co.kr/article/20260311500226"
-    # # response = requests.get(url="http://www.edaily.co.kr/news/newspath.asp?newsid=04608406645382336")
-    
-    # response = requests.get(url="https://www.news2day.co.kr/article/20260311500226")
-    # soup = BeautifulSoup(response.text, "html.parser")
-    # news_body = soup.select(".news_body")
+        crawler = BeautifulSoup(html, "html.parser")
+        selector = self.get_selector_for_site(url=url)
+        
+        if selector is None :
+            return None
+        
+        elements = crawler.select(selector=selector)
+        return "\n".join(e.get_text() for e in elements)
 
-    # print(news_body)
-    finder = NewsFinder(display_size=100)
-    for page in range(2) :
-        finder.search_news(topic="AI Agent", page=1)
+    def get_selector_for_site(self, url : str) -> str :
+        site_name = self.get_site_name(url)
+        if site_name not in SITE_SELECTORS.keys() :
+            return None
+        return SITE_SELECTORS[site_name]
     
+    def get_site_name(self, url) :
+        from urllib.parse import urlparse
+        parsed_url = urlparse(url)
+        netlocs = parsed_url.netloc.split(".")
+        
+        if netlocs[0] == 'www' :
+            netlocs = netlocs[1:]
+        
+        return '.'.join(netlocs)

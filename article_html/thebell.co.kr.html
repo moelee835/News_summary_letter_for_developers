@@ -1,0 +1,32 @@
+
+<script src="/js/jquery-1.9.1.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+	$(window).on("load", function(){
+		var mobileKeyWords = new Array('iphone','ipod','android','blackberry','windows ce','symbian','windows phone','webos','opera mini','opera mobi','polaris','iemobile','lgtelecom','nokia','sonyericsson','lg', 'mot', 'samsung', 'ipad');
+		let isIpad = navigator.userAgent.includes("Macintosh") && 'ontouchend' in document;
+		var isPCBrowser = true;
+		for (var word in mobileKeyWords)
+		{
+			if (navigator.userAgent.toLowerCase().match(mobileKeyWords[word])) 
+			{
+				isPCBrowser =	 false;
+				break;
+			}
+		}
+		
+		if(isIpad)
+		{
+			isPCBrowser = false;
+		}
+
+		if (isPCBrowser==false)
+		{
+			top.location.href='http://m.thebell.co.kr/m/newsview.asp?svccode=00&newskey=202603121106371320107983';
+		}
+		else
+		{
+			top.location.href = "/front/newsview.asp?click=F&key=202603121106371320107983";
+		}	
+	});
+	
+</script>
